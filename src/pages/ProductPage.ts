@@ -1,7 +1,7 @@
-import { expect, type Locator } from '@playwright/test';
-import { BasePage } from './BasePage';
-import { parsePrice } from '../utils/price';
-import type { ProductRef } from '../config/types';
+import { expect, type Locator } from "@playwright/test";
+import { BasePage } from "./BasePage";
+import { parsePrice } from "../utils/price";
+import type { ProductRef } from "../config/types";
 
 export class ProductPage extends BasePage {
   get name(): Locator {
@@ -24,7 +24,7 @@ export class ProductPage extends BasePage {
   }
 
   async open(product: ProductRef | string): Promise<void> {
-    await this.goto(typeof product === 'string' ? product : product.path);
+    await this.goto(typeof product === "string" ? product : product.path);
     await expect(this.name).toBeVisible();
   }
 
@@ -38,14 +38,21 @@ export class ProductPage extends BasePage {
 
   async addToCart(qty?: number): Promise<void> {
     if (qty) await this.setQuantity(qty);
-    await this.waitForXhr('/checkout/offcanvas', () => this.buyButton.click());
+    await this.buyButton.click();
+    await expect(
+      this.page
+        .getByRole("dialog")
+        .filter({ has: this.page.getByRole("link", { name: /zur Kasse/i }) }),
+    ).toBeVisible();
   }
 
   /**
    * Selects another option in the given configurator group (by index).
    * Shopware reloads the page/URL for the new variant.
    */
-  async switchVariant(groupIndex: number): Promise<{ before: string; after: string }> {
+  async switchVariant(
+    groupIndex: number,
+  ): Promise<{ before: string; after: string }> {
     const before = (await this.productNumber.innerText()).trim();
     const group = this.configuratorGroups.nth(groupIndex);
     const options = group.locator(this.s.product.configuratorOptionInput);
@@ -53,17 +60,19 @@ export class ProductPage extends BasePage {
     for (let i = 0; i < count; i++) {
       const opt = options.nth(i);
       if ((await opt.isChecked()) || (await opt.isDisabled())) continue;
-      const cls = (await opt.getAttribute('class')) ?? '';
-      if (!cls.includes('is-combinable')) continue;
-      const id = await opt.getAttribute('id');
+      const cls = (await opt.getAttribute("class")) ?? "";
+      if (!cls.includes("is-combinable")) continue;
+      const id = await opt.getAttribute("id");
       await Promise.all([
-        this.page.waitForURL((u) => !u.pathname.endsWith(before), { timeout: 15_000 }),
+        this.page.waitForURL((u) => !u.pathname.endsWith(before), {
+          timeout: 15_000,
+        }),
         this.page.locator(`label[for="${id}"]`).click(),
       ]);
       await expect(this.productNumber).not.toHaveText(before);
       return { before, after: (await this.productNumber.innerText()).trim() };
     }
-    throw new Error('No alternative combinable variant option found');
+    throw new Error("No alternative combinable variant option found");
   }
 
   get wishlistButton(): Locator {

@@ -1,20 +1,20 @@
-import { test as base, expect, type Page } from '@playwright/test';
-import { loadConfig, hasAdminCredentials } from '../config/loader';
-import type { ResolvedConfig } from '../config/types';
-import { AdminApiClient } from '../api/AdminApiClient';
-import { StoreApiClient } from '../api/StoreApiClient';
-import { buildCustomer, type TestCustomer } from '../data/customer';
-import { Header } from '../components/Header';
-import { MainNavigation } from '../components/MainNavigation';
-import { CookieBanner } from '../components/CookieBanner';
-import { OffcanvasCart } from '../components/OffcanvasCart';
-import { ListingPage } from '../pages/ListingPage';
-import { ProductPage } from '../pages/ProductPage';
-import { CartPage } from '../pages/CartPage';
-import { AuthPage } from '../pages/AuthPage';
-import { AccountPage } from '../pages/AccountPage';
-import { CheckoutPage } from '../pages/CheckoutPage';
-import { ContactPage } from '../pages/ContactPage';
+import { test as base, expect, type Page } from "@playwright/test";
+import { loadConfig, hasAdminCredentials } from "../config/loader";
+import type { ResolvedConfig } from "../config/types";
+import { AdminApiClient } from "../api/AdminApiClient";
+import { StoreApiClient } from "../api/StoreApiClient";
+import { buildCustomer, type TestCustomer } from "../data/customer";
+import { Header } from "../components/Header";
+import { MainNavigation } from "../components/MainNavigation";
+import { CookieBanner } from "../components/CookieBanner";
+import { OffcanvasCart } from "../components/OffcanvasCart";
+import { ListingPage } from "../pages/ListingPage";
+import { ProductPage } from "../pages/ProductPage";
+import { CartPage } from "../pages/CartPage";
+import { AuthPage } from "../pages/AuthPage";
+import { AccountPage } from "../pages/AccountPage";
+import { CheckoutPage } from "../pages/CheckoutPage";
+import { ContactPage } from "../pages/ContactPage";
 
 /** Fast storefront cart setup through the storefront's own form endpoint (shares the browser session). */
 export class CartHelper {
@@ -25,7 +25,10 @@ export class CartHelper {
   ) {}
 
   /** Adds a product by product number. Falls back to the UI (PDP) if Store API is unavailable. */
-  async add(product = this.cfg.testData.simpleProduct, quantity = 1): Promise<void> {
+  async add(
+    product = this.cfg.testData.simpleProduct,
+    quantity = 1,
+  ): Promise<void> {
     if (!this.storeApi) {
       const pdp = new ProductPage(this.page, this.cfg);
       await pdp.open(product);
@@ -33,18 +36,21 @@ export class CartHelper {
       return;
     }
     const id = await this.storeApi.productIdByNumber(product.productNumber);
-    const res = await this.page.request.post('/checkout/line-item/add', {
+    const res = await this.page.request.post("/checkout/line-item/add", {
       form: {
-        redirectTo: 'frontend.cart.offcanvas',
+        redirectTo: "frontend.cart.offcanvas",
         [`lineItems[${id}][id]`]: id,
         [`lineItems[${id}][referencedId]`]: id,
-        [`lineItems[${id}][type]`]: 'product',
+        [`lineItems[${id}][type]`]: "product",
         [`lineItems[${id}][quantity]`]: String(quantity),
-        [`lineItems[${id}][stackable]`]: '1',
-        [`lineItems[${id}][removable]`]: '1',
+        [`lineItems[${id}][stackable]`]: "1",
+        [`lineItems[${id}][removable]`]: "1",
       },
     });
-    expect(res.ok(), `add to cart via request failed: ${res.status()}`).toBeTruthy();
+    expect(
+      res.ok(),
+      `add to cart via request failed: ${res.status()}`,
+    ).toBeTruthy();
   }
 }
 
@@ -79,7 +85,7 @@ type TestFixtures = {
 
 export const test = base.extend<TestFixtures, WorkerFixtures>({
   // ---------- worker scoped (shared by all tests of a worker) ----------
-  cfg: [async ({}, use) => use(loadConfig()), { scope: 'worker' }],
+  cfg: [async ({}, use) => use(loadConfig()), { scope: "worker" }],
 
   adminApi: [
     async ({ cfg }, use) => {
@@ -88,33 +94,46 @@ export const test = base.extend<TestFixtures, WorkerFixtures>({
       await use(client);
       await client.dispose();
     },
-    { scope: 'worker' },
+    { scope: "worker" },
   ],
 
   storeApi: [
     async ({ cfg, adminApi }, use) => {
       let key = cfg.env.accessKey;
-      if (!key && adminApi) key = await adminApi.resolveAccessKey(cfg.baseURL).catch(() => undefined);
+      if (!key && adminApi)
+        key = await adminApi
+          .resolveAccessKey(cfg.baseURL)
+          .catch(() => undefined);
       if (!key) return use(null);
       const client = await StoreApiClient.create(cfg, key);
       await use(client);
       await client.dispose();
     },
-    { scope: 'worker' },
+    { scope: "worker" },
   ],
 
   // ---------- test scoped ----------
   acceptCookies: [true, { option: true }],
 
   context: async ({ context, cfg, acceptCookies }, use) => {
-    if (acceptCookies && cfg.features.cookieBanner) await CookieBanner.preAccept(context, cfg.baseURL);
+    if (acceptCookies && cfg.features.cookieBanner)
+      await CookieBanner.preAccept(context, cfg.baseURL);
     await use(context);
+  },
+
+  page: async ({ page, cfg }, use) => {
+    const accept = page.locator(cfg.selectors.cookie.acceptAll).first();
+    await page.addLocatorHandler(accept, async () => {
+      await accept.click();
+    });
+    await use(page);
   },
 
   header: async ({ page, cfg }, use) => use(new Header(page, cfg)),
   navigation: async ({ page, cfg }, use) => use(new MainNavigation(page, cfg)),
   cookieBanner: async ({ page, cfg }, use) => use(new CookieBanner(page, cfg)),
-  offcanvasCart: async ({ page, cfg }, use) => use(new OffcanvasCart(page, cfg)),
+  offcanvasCart: async ({ page, cfg }, use) =>
+    use(new OffcanvasCart(page, cfg)),
   listing: async ({ page, cfg }, use) => use(new ListingPage(page, cfg)),
   product: async ({ page, cfg }, use) => use(new ProductPage(page, cfg)),
   cart: async ({ page, cfg }, use) => use(new CartPage(page, cfg)),
@@ -122,14 +141,21 @@ export const test = base.extend<TestFixtures, WorkerFixtures>({
   account: async ({ page, cfg }, use) => use(new AccountPage(page, cfg)),
   checkout: async ({ page, cfg }, use) => use(new CheckoutPage(page, cfg)),
   contact: async ({ page, cfg }, use) => use(new ContactPage(page, cfg)),
-  cartHelper: async ({ page, cfg, storeApi }, use) => use(new CartHelper(page, cfg, storeApi)),
+  cartHelper: async ({ page, cfg, storeApi }, use) =>
+    use(new CartHelper(page, cfg, storeApi)),
 
   requireWriteAccess: async ({ cfg }, use) => {
-    test.skip(!cfg.env.allowWriteTests, 'Write tests disabled (ALLOW_WRITE_TESTS=false)');
+    test.skip(
+      !cfg.env.allowWriteTests,
+      "Write tests disabled (ALLOW_WRITE_TESTS=false)",
+    );
     await use();
   },
 
-  customer: async ({ cfg, storeApi, adminApi, browser, requireWriteAccess }, use) => {
+  customer: async (
+    { cfg, storeApi, adminApi, browser, requireWriteAccess },
+    use,
+  ) => {
     void requireWriteAccess;
     const customer = buildCustomer(cfg);
 
@@ -137,7 +163,10 @@ export const test = base.extend<TestFixtures, WorkerFixtures>({
       await storeApi.registerCustomer(customer);
     } else {
       // Fallback: register through the UI in an isolated context
-      const ctx = await browser.newContext({ baseURL: cfg.baseURL, httpCredentials: cfg.env.httpCredentials });
+      const ctx = await browser.newContext({
+        baseURL: cfg.baseURL,
+        httpCredentials: cfg.env.httpCredentials,
+      });
       await CookieBanner.preAccept(ctx, cfg.baseURL);
       const p = await ctx.newPage();
       const auth = new AuthPage(p, cfg);
@@ -147,14 +176,19 @@ export const test = base.extend<TestFixtures, WorkerFixtures>({
       await ctx.close();
     }
     if (cfg.features.doubleOptInRegistration) {
-      test.skip(!adminApi, 'Double opt-in active: Admin API credentials needed to activate test customers');
+      test.skip(
+        !adminApi,
+        "Double opt-in active: Admin API credentials needed to activate test customers",
+      );
       await adminApi!.activateCustomer(customer.email);
     }
 
     await use(customer);
 
     if (cfg.env.cleanupTestData && adminApi) {
-      await adminApi.deleteCustomerByEmail(customer.email).catch(() => undefined);
+      await adminApi
+        .deleteCustomerByEmail(customer.email)
+        .catch(() => undefined);
     }
   },
 
