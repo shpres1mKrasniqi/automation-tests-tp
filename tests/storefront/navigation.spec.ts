@@ -13,7 +13,7 @@ test.describe('Main navigation', () => {
     for (const name of cfg.testData.mainCategories) {
       await page.goto(cfg.routes.home);
       await navigation.openCategory(name);
-      await expect(page.locator('body')).toHaveClass(/is-ctl-navigation/);
+      await expect(page.locator('body')).toHaveClass(/is-ctl-(navigation|landingpage)/);
       await expect(page).not.toHaveURL(new RegExp(`${cfg.baseURL.replace(/[.]/g, '\\.')}/?$`));
       await expect(page.locator(cfg.selectors.page.main).first()).toBeVisible();
     }

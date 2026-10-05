@@ -23,14 +23,15 @@ export class MainNavigation extends BasePage {
     const link = this.rootLink(name);
     const href = (await link.getAttribute('href')) ?? '';
     const target = new URL(href, this.cfg.baseURL).pathname;
+    const flyout = this.$(this.s.navigation.flyout).locator('visible=true').first();
     await link.click();
-    const navigated = await this.page
-      .waitForURL((u) => u.pathname === target, { timeout: 3_000 })
-      .then(() => true)
-      .catch(() => false);
-    if (!navigated) {
-      // dropdown opened → use the "show category" link inside the flyout
-      const inFlyout = this.$(this.s.navigation.flyout).locator('visible=true').locator(`a[href="${href}"]`).first();
+    // either the link navigates, or it opens a flyout (dropdown toggle) with the "show category" link
+    await Promise.race([
+      this.page.waitForURL((u) => u.pathname === target),
+      flyout.waitFor({ state: 'visible' }),
+    ]);
+    if (new URL(this.page.url()).pathname !== target) {
+      const inFlyout = flyout.locator(`a[href="${href}"]`).first();
       await Promise.all([this.page.waitForURL((u) => u.pathname === target), inFlyout.click()]);
     }
   }

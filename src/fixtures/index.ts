@@ -54,6 +54,14 @@ export class CartHelper {
   }
 }
 
+/** The consent layer (Usercentrics) can appear late and intercept clicks: accept it whenever it shows up. */
+async function autoAcceptConsent(page: Page, cfg: ResolvedConfig): Promise<void> {
+  const accept = page.locator(cfg.selectors.cookie.acceptAll).first();
+  await page.addLocatorHandler(accept, async () => {
+    await accept.click();
+  });
+}
+
 type WorkerFixtures = {
   cfg: ResolvedConfig;
   adminApi: AdminApiClient | null;
@@ -122,10 +130,7 @@ export const test = base.extend<TestFixtures, WorkerFixtures>({
   },
 
   page: async ({ page, cfg }, use) => {
-    const accept = page.locator(cfg.selectors.cookie.acceptAll).first();
-    await page.addLocatorHandler(accept, async () => {
-      await accept.click();
-    });
+    await autoAcceptConsent(page, cfg);
     await use(page);
   },
 
@@ -152,7 +157,8 @@ export const test = base.extend<TestFixtures, WorkerFixtures>({
     await use();
   },
 
-  customer: async (
+  // UI registration (no Store API) with address validation takes ~30s, so it gets its own budget
+  customer: [async (
     { cfg, storeApi, adminApi, browser, requireWriteAccess },
     use,
   ) => {
@@ -169,6 +175,7 @@ export const test = base.extend<TestFixtures, WorkerFixtures>({
       });
       await CookieBanner.preAccept(ctx, cfg.baseURL);
       const p = await ctx.newPage();
+      await autoAcceptConsent(p, cfg);
       const auth = new AuthPage(p, cfg);
       await auth.open();
       await auth.register(customer);
@@ -190,13 +197,13 @@ export const test = base.extend<TestFixtures, WorkerFixtures>({
         .deleteCustomerByEmail(customer.email)
         .catch(() => undefined);
     }
-  },
+  }, { timeout: 120_000 }],
 
-  loggedInPage: async ({ page, auth, customer }, use) => {
+  loggedInPage: [async ({ page, auth, customer }, use) => {
     await auth.open();
     await auth.loginAndExpectSuccess(customer.email, customer.password);
     await use(page);
-  },
+  }, { timeout: 60_000 }],
 });
 
 export { expect };

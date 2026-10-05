@@ -1,11 +1,14 @@
 import {
   expect,
+  type BrowserContext,
   type Locator,
   type Page,
   type Response,
 } from "@playwright/test";
 import type { ResolvedConfig } from "../config/types";
 import type { Selectors } from "../selectors/shopware67";
+
+const consentAccepted = new WeakSet<BrowserContext>();
 
 /**
  * Base for all page objects: config + selectors + common Shopware helpers.
@@ -25,11 +28,18 @@ export abstract class BasePage {
     return this.page.locator(selector);
   }
 
-  private async dismissConsent(): Promise<void> {
+  /**
+   * The consent layer (Usercentrics) shows up a few seconds after load and then overlays the page
+   * (clicks/typing get lost). Wait for it once per browser context; after it was accepted the
+   * choice is stored and later navigations in the same context do not show it again.
+   */
+  async dismissConsent(): Promise<void> {
+    if (consentAccepted.has(this.page.context())) return;
     const accept = this.page.locator(this.s.cookie.acceptAll).first();
     try {
-      await accept.click({ timeout: 5_000 });
+      await accept.click({ timeout: 10_000 });
       await expect(accept).toBeHidden();
+      consentAccepted.add(this.page.context());
     } catch {
       /* banner not shown (consent already stored) */
     }

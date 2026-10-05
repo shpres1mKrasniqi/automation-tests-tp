@@ -11,11 +11,14 @@ const config: ProjectConfig = {
     guestCheckout: true, // TODO: confirm in staging
     registration: true, // TODO: confirm in staging
     doubleOptInRegistration: false, // TODO: confirm in staging
-    productReviews: true,
+    // No review teaser / review tab found on the PDP (verified on production)
+    productReviews: false,
     contactForm: false,
     newsletter: false, // page /service/newsletter/ exists; no form seen on the homepage
     promotionCodes: true, // TODO: confirm
-    cookieBanner: false, // Usercentrics, see notes below
+    // Usercentrics is accepted automatically by the page fixture (addLocatorHandler on
+    // cookie.acceptAll). Keep false: the cookie spec asserts Shopware's cookie-preference cookie.
+    cookieBanner: false,
     languageSwitch: false,
     currencySwitch: false,
     mobileNavigation: true,
@@ -34,12 +37,16 @@ const config: ProjectConfig = {
     checkoutRegister: "/checkout/register",
     checkoutConfirm: "/checkout/confirm",
     checkoutFinish: "/checkout/finish",
-    search: "/search",
+    // Search is FACT-Finder: results live at /factfinder/result?query=...
+    search: "/factfinder/result",
+    searchParam: "query",
     wishlist: "/wishlist",
     contactPage: "/informationen/kontakt/",
   },
 
   testData: {
+    // Header order. "Farbbänder" is left out on purpose: its link (/navigation/<id>)
+    // redirects to /Farbband-Schriftband/, which returns 404 on production.
     mainCategories: [
       "Druckerpatronen",
       "Toner",
@@ -47,7 +54,8 @@ const config: ProjectConfig = {
       "Papier",
       "Büroartikel",
     ],
-    listingCategoryPath: "/Papier/",
+    // /Papier/ has only 2 products; /bueroartikel/ has 24 + pagination + sorting
+    listingCategoryPath: "/bueroartikel/",
     simpleProduct: {
       path: "/Papier/Druckerpapier-DIN-A4/Druckerpapier-DIN-A4-80g-weiss-500-Blatt.html",
       productNumber: "43924",
@@ -62,8 +70,10 @@ const config: ProjectConfig = {
     },
     searchTerm: "43924", // the search field takes printer models or product numbers
     searchMinResults: 1,
+    // staging deliberately throws the Symfony routing exception for unknown URLs (production shows the shop 404 page)
+    notFoundPage: "exception",
     searchNoResultTerm: "9999999999999",
-    expectedFilterTypes: [], // no standard filter panel seen on /Papier/, verify on Toner
+    expectedFilterTypes: [], // only a printer-model filter on desktop, no standard filter panel
     expectedSortings: ["name-asc", "name-desc", "price-asc", "price-desc"],
     customer: {
       emailDomain: "example.com",
@@ -72,7 +82,17 @@ const config: ProjectConfig = {
       firstName: "Erika",
       lastName: "Tester",
       salutationIndex: 1,
+      // Endereco validates addresses on registration/checkout. This one is accepted unchanged
+      // (a street like "Oststraße 1" would be rewritten to "Oststr. 1" by the plugin).
       address: {
+        street: "Unter den Linden 77",
+        zipcode: "10117",
+        city: "Berlin",
+        countryIso: "DE",
+        countryLabel: "Deutschland|Germany",
+      },
+      // Not a real street in 48624 -> Endereco opens its "Rechnungsadresse prüfen" modal
+      invalidAddress: {
         street: "Teststraße 1",
         zipcode: "48624",
         city: "Schöppingen",
@@ -109,9 +129,31 @@ const config: ProjectConfig = {
   ],
 
   selectors: {
-    header: { logo: ".header-logo-main-link:visible >> nth=0" },
+    page: {
+      // the auth forms contain hidden `.alert.alert-danger.d-none` placeholders
+      alertDanger: ".alert-danger:not(.d-none)",
+    },
+    header: {
+      logo: ".header-logo-main-link:visible >> nth=0",
+      // FACT-Finder suggest list
+      searchSuggest: ".ff-suggest-container",
+    },
+    login: {
+      email: "#floatingInput-loginMail",
+      password: "#floatingInput-loginPassword",
+      submit: "form.login-form .tp-login-btn-submit",
+    },
+    offcanvasCart: {
+      // the hidden .js-quantity-selector inputs are plugin stubs; the real control is the <select>
+      quantityInput: 'select[name="quantity"]',
+    },
+    cart: {
+      checkoutButton: "a.tp-confirm-form-proceed",
+      promotionInput: 'form.offcanvas-cart-promotion-form input[name="code"]',
+      promotionSubmit: "#addPromotionOffcanvasCart",
+    },
     product: {
-      productNumber: 'tr:has-text("Produktnummer") td',
+      productNumber: ".product-pim-id",
       description: '[role="tablist"]',
       tax: 'main p:has-text("inkl. MwSt."):visible',
       quantityInput: 'input.js-quantity-selector[type="number"]',

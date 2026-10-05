@@ -13,7 +13,10 @@ export class AccountPage extends BasePage {
 
   async openProfile(): Promise<void> {
     await this.goto(this.cfg.routes.accountProfile);
-    await expect(this.$(this.s.account.profileForm)).toBeVisible();
+    const form = this.$(this.s.account.profileForm);
+    const toggle = this.$(this.s.account.profileEditToggle);
+    if (!(await form.isVisible()) && (await toggle.isVisible())) await toggle.click();
+    await expect(form).toBeVisible();
   }
 
   async updateName(firstName: string, lastName: string): Promise<void> {

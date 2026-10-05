@@ -47,4 +47,33 @@ test.describe('Customer registration', () => {
     await expect(page).toHaveURL(/\/account\/(login|register)/);
     await expect(page.locator(`${cfg.selectors.page.alertDanger}, ${cfg.selectors.page.invalidFeedback}`).locator('visible=true').first()).toBeVisible();
   });
+
+  test('invalid address opens the address check popup and blocks registration', async ({ page, cfg, auth, adminApi, requireWriteAccess }) => {
+    void requireWriteAccess;
+    const invalidAddress = cfg.testData.customer.invalidAddress;
+    test.skip(!invalidAddress, 'No invalidAddress configured (shop without address validation)');
+    const customer = buildCustomer(cfg, { address: invalidAddress! });
+
+    await auth.register(customer, { invalidAddress: true });
+
+    // the popup is expected here: it must be shown and the form must not have been submitted
+    await expect(auth.addressCheckModal).toBeVisible();
+    await expect(page).toHaveURL(/\/account\/(login|register)/);
+
+    // taking over the shop's suggestion corrects the form (it does not submit by itself)
+    await auth.acceptSuggestedAddress();
+    await expect(auth.registerForm.locator(cfg.selectors.register.street)).not.toHaveValue(invalidAddress!.street);
+    await auth.submitRegistration();
+    await auth.expectPath(cfg.routes.account);
+    if (adminApi && cfg.env.cleanupTestData) await adminApi.deleteCustomerByEmail(customer.email);
+  });
+
+  test('valid address is accepted without the address check popup', async ({ page, cfg, auth, adminApi, requireWriteAccess }) => {
+    void requireWriteAccess;
+    const customer = buildCustomer(cfg);
+    await auth.register(customer);
+    await auth.expectPath(cfg.routes.account);
+    await expect(auth.addressCheckModal).toHaveCount(0);
+    if (adminApi && cfg.env.cleanupTestData) await adminApi.deleteCustomerByEmail(customer.email);
+  });
 });

@@ -124,6 +124,8 @@ export const shopware67Selectors = {
     quantityInput: '.js-quantity-selector',
     plus: '.js-btn-plus',
     minus: '.js-btn-minus',
+    /** optional quantity dropdown (used instead of plus/minus by some themes) */
+    quantitySelect: 'select[name="quantity"]',
     remove: '.line-item-remove-button',
     checkoutButton: '.begin-checkout-btn',
     cartLink: 'a[href$="/checkout/cart"]',
@@ -171,11 +173,27 @@ export const shopware67Selectors = {
     dataProtection: '[name="acceptedDataProtection"]',
     submit: 'button[type="submit"]', // scoped to register form
   },
+  /**
+   * Address validation plugin (Endereco). Optional: shops without the plugin never render these,
+   * the page objects only touch them when `status` exists in the form.
+   */
+  addressCheck: {
+    /** hidden field the plugin fills once its check has finished (empty until then) */
+    status: '[name$="[amsStatus]"]',
+    modal: '.endereco-modal',
+    suggestion: '.endereco-address-predictions--suggestions .endereco-address-predictions__radio',
+    original: '.endereco-address-predictions--original .endereco-address-predictions__radio',
+    confirmOriginal: '[endereco-confirm-address-checkbox]',
+    useSelection: '[endereco-use-selection]',
+    close: '[endereco-modal-close]',
+  },
   account: {
     overview: '.account-overview, .account-welcome',
     aside: '.account-aside',
     asideItem: '.account-aside-item',
     profileForm: '#profilePersonalForm',
+    /** Themes that show the profile read-only first have a button that reveals the form (absent in core). */
+    profileEditToggle: '#change-data',
     profileFirstName: '#profilePersonalForm [name="firstName"]',
     profileLastName: '#profilePersonalForm [name="lastName"]',
     profileSubmit: '#profilePersonalForm button[type="submit"]',

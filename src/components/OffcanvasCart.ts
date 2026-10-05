@@ -38,7 +38,15 @@ export class OffcanvasCart extends BasePage {
 
   async increaseQuantity(name: string): Promise<void> {
     await this.waitUntilReady(name);
-    await this.waitForXhr('/checkout/offcanvas', () => this.lineItem(name).locator(this.s.offcanvasCart.plus).click());
+    const item = this.lineItem(name);
+    // themes with a quantity dropdown instead of +/- buttons (HD-Toner)
+    const select = item.locator(this.s.offcanvasCart.quantitySelect);
+    if (await select.isVisible()) {
+      const next = Number(await select.inputValue()) + 1;
+      await this.waitForXhr('/checkout/offcanvas', () => select.selectOption(String(next)));
+      return;
+    }
+    await this.waitForXhr('/checkout/offcanvas', () => item.locator(this.s.offcanvasCart.plus).click());
   }
 
   async remove(name: string): Promise<void> {

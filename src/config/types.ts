@@ -1,7 +1,9 @@
-import type { Selectors } from '../selectors/shopware67';
+import type { Selectors } from "../selectors/shopware67";
 
 /** Deep partial helper used for project-level overrides. */
-export type DeepPartial<T> = { [K in keyof T]?: T[K] extends object ? DeepPartial<T[K]> : T[K] };
+export type DeepPartial<T> = {
+  [K in keyof T]?: T[K] extends object ? DeepPartial<T[K]> : T[K];
+};
 
 /**
  * Switch storefront features on/off per client project.
@@ -75,6 +77,8 @@ export interface ProjectConfig {
     checkoutConfirm: string;
     checkoutFinish: string;
     search: string;
+    /** Query parameter of the search results URL (default "search"; FACT-Finder uses "query"). */
+    searchParam?: string;
     wishlist: string;
     /** Path of a CMS page containing the contact form (null = discover via footer). */
     contactPage: string | null;
@@ -95,8 +99,12 @@ export interface ProjectConfig {
     searchMinResults: number;
     /** Search term guaranteed to return nothing. */
     searchNoResultTerm: string;
+    /** How unknown URLs render: the storefront error page (default) or the framework exception page (intentional on HD-Toner staging). */
+    notFoundPage?: 'shop' | 'exception';
     /** Filter types that must exist on the listing page (language independent). */
-    expectedFilterTypes: Array<'manufacturer' | 'properties' | 'price' | 'rating' | 'boolean'>;
+    expectedFilterTypes: Array<
+      "manufacturer" | "properties" | "price" | "rating" | "boolean"
+    >;
     /** Sorting option keys that must exist (Shopware values). */
     expectedSortings: string[];
     customer: {
@@ -108,6 +116,8 @@ export interface ProjectConfig {
       /** Salutation option index in the select (0 = "not specified"). */
       salutationIndex: number;
       address: CustomerAddress;
+      /** Address rejected by the shop's address validation (negative tests); omit if the shop has none. */
+      invalidAddress?: CustomerAddress;
     };
     /** Visible text of the footer link leading to the contact form. */
     contactLinkText: RegExp;
@@ -128,7 +138,7 @@ export interface ProjectConfig {
 }
 
 /** Final config after env overrides + selector merge. */
-export interface ResolvedConfig extends Omit<ProjectConfig, 'selectors'> {
+export interface ResolvedConfig extends Omit<ProjectConfig, "selectors"> {
   selectors: Selectors;
   env: {
     httpCredentials?: { username: string; password: string };

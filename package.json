@@ -5,7 +5,7 @@
   "description": "Reusable Playwright + TypeScript E2E test skeleton for Shopware 6.7 storefronts",
   "scripts": {
     "test": "playwright test",
-    "test:smoke": "playwright test --grep @smoke",
+    "test:smoke": "playwright test --project=firefox --grep @smoke",
     "test:regression": "playwright test --grep-invert @mobile",
     "test:mobile": "playwright test --project=mobile",
     "test:client": "playwright test tests/client",

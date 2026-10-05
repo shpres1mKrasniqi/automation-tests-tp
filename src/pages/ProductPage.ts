@@ -39,11 +39,10 @@ export class ProductPage extends BasePage {
   async addToCart(qty?: number): Promise<void> {
     if (qty) await this.setQuantity(qty);
     await this.buyButton.click();
-    await expect(
-      this.page
-        .getByRole("dialog")
-        .filter({ has: this.page.getByRole("link", { name: /zur Kasse/i }) }),
-    ).toBeVisible();
+    // off-canvas cart (HD-Toner: "tp-cart-popup") with the checkout button
+    const cart = this.$(this.s.offcanvasCart.root);
+    await expect(cart).toBeVisible();
+    await expect(cart.locator(this.s.offcanvasCart.checkoutButton).first()).toBeVisible();
   }
 
   /**

@@ -1,4 +1,5 @@
 import { test, expect } from '../../src/fixtures';
+import { expectNotFoundPage } from '../../src/utils/notFound';
 import { loadConfig } from '../../src/config/loader';
 
 test.describe('Important links & redirects', () => {
@@ -47,9 +48,7 @@ test.describe('Error handling', () => {
   test('unknown URL shows a 404 page with a way back', { tag: ['@smoke', '@mobile'] }, async ({ page, cfg }) => {
     const res = await page.goto(`/e2e-not-existing-${Date.now()}`);
     expect(res?.status()).toBe(404);
-    await expect(page.locator(cfg.selectors.error.body)).toBeAttached();
-    await expect(page.locator(cfg.selectors.header.logo)).toBeVisible();
-    await expect(page.locator(cfg.selectors.error.backToShop).first()).toBeVisible();
+    await expectNotFoundPage(page, cfg);
   });
 
   test('unknown category/deep URL returns 404, not 500', async ({ request, cfg }) => {
@@ -57,8 +56,16 @@ test.describe('Error handling', () => {
     expect(res.status()).toBe(404);
   });
 
-  test('invalid listing parameters do not crash the page', async ({ page, cfg }) => {
-    const res = await page.goto(`${cfg.testData.listingCategoryPath}?order=invalid&p=99999&manufacturer=xyz`);
+  test('invalid sorting and filter parameters do not crash the page', async ({ page, cfg }) => {
+    const res = await page.goto(`${cfg.testData.listingCategoryPath}?order=invalid&manufacturer=xyz`);
+    expect(res?.status()).toBeLessThan(500);
+  });
+
+  test('page number beyond the last page does not crash the page', async ({ page, cfg }) => {
+    // KNOWN SHOP DEFECT (reproduced on staging and production, HD-Toner): /bueroartikel/?p=99999 answers 500.
+    // test.fail() keeps it visible: the run fails as soon as the shop is fixed, so remove the line then.
+    test.fail(cfg.name === 'HD-Toner', 'Out-of-range ?p= returns HTTP 500 in the HD-Toner shop');
+    const res = await page.goto(`${cfg.testData.listingCategoryPath}?p=99999`);
     expect(res?.status()).toBeLessThan(500);
   });
 

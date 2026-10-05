@@ -27,8 +27,7 @@ test.describe('Login / logout', () => {
 
   test('account menu in header offers login', async ({ page, cfg, header }) => {
     await page.goto(cfg.routes.home);
-    const dd = await header.openAccountMenu();
-    await expect(dd.locator(cfg.selectors.header.accountLoginLink).first()).toBeVisible();
+    await expect(await header.guestLoginLink()).toBeVisible();
   });
 
   test('logged-in header menu offers logout', async ({ loggedInPage: page, cfg, header }) => {

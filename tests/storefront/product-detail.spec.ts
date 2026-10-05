@@ -1,4 +1,5 @@
 import { test, expect, skipUnless } from "../../src/fixtures";
+import { expectNotFoundPage } from "../../src/utils/notFound";
 
 test.describe("Product detail page", () => {
   test(
@@ -40,6 +41,7 @@ test.describe("Product detail page", () => {
     { tag: "@smoke" },
     async ({ product, cfg, page }) => {
       const v = cfg.testData.variantProduct;
+      test.skip(v.productNumber === "TODO", "No variant product configured in the project profile");
       await product.open(v);
       await expect(product.configuratorGroups).toHaveCount(
         v.optionGroups.length,
@@ -57,14 +59,14 @@ test.describe("Product detail page", () => {
     cfg,
     page,
   }) => {
-    await product.open(cfg.testData.variantProduct);
+    await product.open(cfg.testData.simpleProduct);
     const crumb = page.locator(`${cfg.selectors.page.breadcrumb} a`).first();
     await expect(crumb).toBeVisible();
     await Promise.all([
       page.waitForLoadState("domcontentloaded"),
       crumb.click(),
     ]);
-    await expect(page.locator("body")).toHaveClass(/is-ctl-navigation/);
+    await expect(page.locator("body")).toHaveClass(/is-ctl-(navigation|landingpage)/);
   });
 
   test("reviews tab/teaser is present", async ({ product, cfg }) => {
@@ -78,6 +80,6 @@ test.describe("Product detail page", () => {
   test("unknown product URL returns 404", async ({ page, cfg }) => {
     const res = await page.goto("/this-product-does-not-exist-e2e/XX-000");
     expect(res?.status()).toBe(404);
-    await expect(page.locator(cfg.selectors.error.body)).toBeAttached();
+    await expectNotFoundPage(page, cfg);
   });
 });

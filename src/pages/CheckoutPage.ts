@@ -48,7 +48,7 @@ export class CheckoutPage extends BasePage {
     if (paymentMethod) await this.selectPaymentMethod(paymentMethod);
     await this.acceptTerms();
     await Promise.all([
-      this.page.waitForURL(new RegExp(escapeRegExp(this.cfg.routes.checkoutFinish)), { timeout: 45_000 }),
+      this.page.waitForURL(new RegExp(escapeRegExp(this.cfg.routes.checkoutFinish)), { timeout: 45_000, waitUntil: 'domcontentloaded' }), // finish page keeps loading third-party widgets (promo popup)
       this.submitButton.click(),
     ]);
     const nr = this.$(this.s.checkout.finishOrderNumber).first();

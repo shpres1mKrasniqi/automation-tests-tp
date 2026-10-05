@@ -131,7 +131,8 @@ export class ListingPage extends BasePage {
   async addToCartFromListing(index = 0): Promise<string> {
     const box = this.productBoxes.nth(index);
     const name = (await box.locator(this.s.listing.productName).innerText()).trim();
-    await this.waitForXhr('/checkout/offcanvas', () => box.locator(this.s.listing.buyButton).click());
+    // the caller asserts the off-canvas cart (state) instead of a specific XHR, which HD-Toner's cart popup does not always issue
+    await box.locator(this.s.listing.buyButton).first().click();
     return name;
   }
 
@@ -139,7 +140,7 @@ export class ListingPage extends BasePage {
   async firstBuyableIndex(): Promise<number> {
     const count = await this.productBoxes.count();
     for (let i = 0; i < count; i++) {
-      if (await this.productBoxes.nth(i).locator(this.s.listing.buyButton).isVisible()) return i;
+      if (await this.productBoxes.nth(i).locator(this.s.listing.buyButton).first().isVisible()) return i;
     }
     return -1;
   }

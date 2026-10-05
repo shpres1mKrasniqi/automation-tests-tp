@@ -98,6 +98,10 @@ test.describe("Sorting", () => {
 
 test.describe("Filters", () => {
   test.beforeEach(async ({ listing, cfg }) => {
+    test.skip(
+      cfg.testData.expectedFilterTypes.length === 0,
+      "Shop has no standard filter panel (expectedFilterTypes is empty in the project profile)",
+    );
     await listing.open(cfg.testData.listingCategoryPath);
   });
 
