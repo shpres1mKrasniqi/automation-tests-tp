@@ -22,17 +22,22 @@ export class MainNavigation extends BasePage {
   async openCategory(name: string): Promise<void> {
     const link = this.rootLink(name);
     const href = (await link.getAttribute('href')) ?? '';
-    const target = new URL(href, this.cfg.baseURL).pathname;
+    // a nav href without trailing slash (Tintencenter "/toner") is redirected to its canonical "/toner/"
+    const norm = (p: string) => p.replace(/\/+$/, '');
+    const target = norm(new URL(href, this.cfg.baseURL).pathname);
     const flyout = this.$(this.s.navigation.flyout).locator('visible=true').first();
-    await link.click();
-    // either the link navigates, or it opens a flyout (dropdown toggle) with the "show category" link
-    await Promise.race([
-      this.page.waitForURL((u) => u.pathname === target),
-      flyout.waitFor({ state: 'visible' }),
-    ]);
-    if (new URL(this.page.url()).pathname !== target) {
+    // either the link navigates, or it opens a flyout (dropdown toggle) with the "show category" link;
+    // the consent layer can swallow the click, so it is repeated until one of the two happens
+    await expect(async () => {
+      await link.click();
+      await Promise.race([
+        this.page.waitForURL((u) => norm(u.pathname) === target, { timeout: 5_000 }),
+        flyout.waitFor({ state: 'visible', timeout: 5_000 }),
+      ]);
+    }).toPass({ timeout: 30_000 });
+    if (norm(new URL(this.page.url()).pathname) !== target) {
       const inFlyout = flyout.locator(`a[href="${href}"]`).first();
-      await Promise.all([this.page.waitForURL((u) => u.pathname === target), inFlyout.click()]);
+      await Promise.all([this.page.waitForURL((u) => norm(u.pathname) === target), inFlyout.click()]);
     }
   }
 

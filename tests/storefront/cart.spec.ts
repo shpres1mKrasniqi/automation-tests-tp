@@ -1,4 +1,4 @@
-import { test, expect } from '../../src/fixtures';
+import { test, expect, shopConfig } from '../../src/fixtures';
 
 test.describe('Cart', () => {
   test('add product from detail page opens off-canvas cart', { tag: ['@smoke', '@mobile'] }, async ({ product, offcanvasCart, header, cfg }) => {
@@ -18,7 +18,7 @@ test.describe('Cart', () => {
   test('add product from listing', async ({ listing, offcanvasCart, cfg }) => {
     await listing.open(cfg.testData.listingCategoryPath);
     const idx = await listing.firstBuyableIndex();
-    test.skip(idx < 0, 'No directly buyable product on listing');
+    expect(idx, 'the listing offers no directly buyable product').toBeGreaterThanOrEqual(0);
     const name = await listing.addToCartFromListing(idx);
     await offcanvasCart.expectOpen();
     await expect(offcanvasCart.lineItem(name)).toBeVisible();
@@ -76,16 +76,15 @@ test.describe('Cart', () => {
   });
 
   test('invalid promotion code is rejected', async ({ page, cart, cartHelper, cfg }) => {
-    test.skip(!cfg.features.promotionCodes, 'promotion codes disabled');
     await cartHelper.add(cfg.testData.simpleProduct, 1);
     await cart.open();
     await cart.applyPromotion('E2E-INVALID-CODE-4711');
     await expect(page.locator(`${cfg.selectors.page.alertDanger}, .alert-warning`).first()).toBeVisible();
   });
 
-  test('valid promotion code reduces total', async ({ cart, cartHelper, cfg }) => {
+  // registered only when the profile has a valid test promotion code (staging has none; see "cart total adds up" in tonerpartner.spec.ts)
+  if (shopConfig.features.promotionCodes && shopConfig.testData.promotionCode) test('valid promotion code reduces total', async ({ cart, cartHelper, cfg }) => {
     const code = cfg.testData.promotionCode;
-    test.skip(!cfg.features.promotionCodes || !code, 'No promotion code configured');
     await cartHelper.add(cfg.testData.simpleProduct, 1);
     await cart.open();
     const before = await cart.totalValue();

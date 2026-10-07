@@ -51,7 +51,8 @@ export class ListingPage extends BasePage {
    */
   private async reloadListing(action: () => Promise<unknown>): Promise<void> {
     const oldBox = await this.productBoxes.first().elementHandle({ timeout: 1_000 }).catch(() => null);
-    await this.waitForXhr(ListingPage.LISTING_XHR, action);
+    // the DOM swap below is the real success criterion (see waitForXhr `anyStatus`)
+    await this.waitForXhr(ListingPage.LISTING_XHR, action, { anyStatus: true });
     if (oldBox) await this.page.waitForFunction((el) => !el.isConnected, oldBox);
   }
 

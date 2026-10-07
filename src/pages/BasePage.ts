@@ -74,15 +74,21 @@ export abstract class BasePage {
     await expect(this.page).toHaveURL(re);
   }
 
-  /** Waits for the Shopware AJAX call triggered by `action` (listing, offcanvas, cart …). */
+  /**
+   * Waits for the Shopware AJAX call triggered by `action` (listing, offcanvas, cart …).
+   * `anyStatus`: do not require a successful status. Firefox reports a fetch() behind basic auth
+   * (staging) with the 401 challenge although the shop renders the retried response; the caller
+   * must then assert the resulting page state instead.
+   */
   async waitForXhr(
     urlPart: string | RegExp,
     action: () => Promise<unknown>,
+    opts: { anyStatus?: boolean } = {},
   ): Promise<Response> {
     const matcher = (r: Response) =>
       (typeof urlPart === "string"
         ? r.url().includes(urlPart)
-        : urlPart.test(r.url())) && r.status() < 400;
+        : urlPart.test(r.url())) && (opts.anyStatus || r.status() < 400);
     const [res] = await Promise.all([
       this.page.waitForResponse(matcher),
       action(),

@@ -8,6 +8,7 @@ import { Header } from "../components/Header";
 import { MainNavigation } from "../components/MainNavigation";
 import { CookieBanner } from "../components/CookieBanner";
 import { OffcanvasCart } from "../components/OffcanvasCart";
+import { PrinterFinder } from "../components/PrinterFinder";
 import { ListingPage } from "../pages/ListingPage";
 import { ProductPage } from "../pages/ProductPage";
 import { CartPage } from "../pages/CartPage";
@@ -71,10 +72,13 @@ type WorkerFixtures = {
 type TestFixtures = {
   /** Set false via test.use({ acceptCookies: false }) to see the cookie banner. */
   acceptCookies: boolean;
+  /** Set false via test.use({ autoConsent: false }) to see the consent layer (Usercentrics) instead of accepting it. */
+  autoConsent: boolean;
   header: Header;
   navigation: MainNavigation;
   cookieBanner: CookieBanner;
   offcanvasCart: OffcanvasCart;
+  printerFinder: PrinterFinder;
   listing: ListingPage;
   product: ProductPage;
   cart: CartPage;
@@ -122,6 +126,7 @@ export const test = base.extend<TestFixtures, WorkerFixtures>({
 
   // ---------- test scoped ----------
   acceptCookies: [true, { option: true }],
+  autoConsent: [true, { option: true }],
 
   context: async ({ context, cfg, acceptCookies }, use) => {
     if (acceptCookies && cfg.features.cookieBanner)
@@ -129,8 +134,8 @@ export const test = base.extend<TestFixtures, WorkerFixtures>({
     await use(context);
   },
 
-  page: async ({ page, cfg }, use) => {
-    await autoAcceptConsent(page, cfg);
+  page: async ({ page, cfg, autoConsent }, use) => {
+    if (autoConsent) await autoAcceptConsent(page, cfg);
     await use(page);
   },
 
@@ -139,6 +144,7 @@ export const test = base.extend<TestFixtures, WorkerFixtures>({
   cookieBanner: async ({ page, cfg }, use) => use(new CookieBanner(page, cfg)),
   offcanvasCart: async ({ page, cfg }, use) =>
     use(new OffcanvasCart(page, cfg)),
+  printerFinder: async ({ page, cfg }, use) => use(new PrinterFinder(page, cfg)),
   listing: async ({ page, cfg }, use) => use(new ListingPage(page, cfg)),
   product: async ({ page, cfg }, use) => use(new ProductPage(page, cfg)),
   cart: async ({ page, cfg }, use) => use(new CartPage(page, cfg)),
@@ -208,7 +214,8 @@ export const test = base.extend<TestFixtures, WorkerFixtures>({
 
 export { expect };
 
-/** Skip helper for feature-flagged tests: `skipUnless(cfg.features.wishlist, 'wishlist')` */
-export function skipUnless(enabled: boolean, feature: string): void {
-  test.skip(!enabled, `Feature "${feature}" disabled in project profile`);
-}
+/**
+ * Resolved project profile at registration time: a spec registers only the tests that apply to the
+ * shop (`if (shopConfig.features.x) test.describe(...)`) instead of skipping them at run time.
+ */
+export const shopConfig = loadConfig();

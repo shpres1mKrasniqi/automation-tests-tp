@@ -1,4 +1,4 @@
-import { test, expect, skipUnless } from '../../src/fixtures';
+import { test, expect, shopConfig } from '../../src/fixtures';
 import { buildCustomer } from '../../src/data/customer';
 
 test.describe('Checkout', () => {
@@ -14,9 +14,10 @@ test.describe('Checkout', () => {
     await expect(auth.registerForm).toBeVisible();
   });
 
-  test('guest checkout places an order', { tag: ['@smoke', '@mobile'] }, async ({ page, cfg, cart, cartHelper, auth, checkout, requireWriteAccess }) => {
+  if (shopConfig.features.guestCheckout) test('guest checkout places an order', { tag: ['@smoke', '@mobile'] }, async ({ page, cfg, cart, cartHelper, auth, checkout, requireWriteAccess }) => {
     void requireWriteAccess;
-    skipUnless(cfg.features.guestCheckout, 'guestCheckout');
+    // cart + guest registration (address check) + order takes ~60s on staging: more than the default budget
+    test.slow();
 
     await cartHelper.add(cfg.testData.simpleProduct);
     await cart.open();
@@ -33,6 +34,8 @@ test.describe('Checkout', () => {
   });
 
   test('registered customer places an order and sees it in the account', { tag: '@smoke' }, async ({ loggedInPage: page, cfg, cartHelper, checkout, account }) => {
+    // login + order + account order list on staging: more than the default budget when run in parallel
+    test.slow();
     await cartHelper.add(cfg.testData.simpleProduct, 2);
     await checkout.openConfirm();
     await checkout.expectOnConfirm();
@@ -49,7 +52,9 @@ test.describe('Checkout', () => {
     await cartHelper.add(cfg.testData.simpleProduct);
     await checkout.openConfirm();
     const tos = page.locator(cfg.selectors.checkout.tos);
-    test.skip((await tos.count()) === 0, 'Shop has no TOS checkbox');
+    await expect(tos).toHaveCount(1);
+    // the default payment method may swap the submit button for its own (e.g. PayPal)
+    await checkout.ensurePaymentMethod();
     await checkout.submitButton.click();
     // Shopware rewrites the URL client-side (history API) without submitting — assert
     // we are still on the confirm page instead of matching the URL.

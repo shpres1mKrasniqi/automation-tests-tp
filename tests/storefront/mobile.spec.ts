@@ -1,12 +1,11 @@
-import { test, expect, skipUnless } from '../../src/fixtures';
+import { test, expect, shopConfig } from '../../src/fixtures';
 
 /**
  * Mobile-only behaviour. Runs in the "mobile" project (Pixel 7).
  * Other specs tagged @mobile also run there.
  */
 test.describe('Mobile / responsive', { tag: '@mobile-only' }, () => {
-  test('off-canvas navigation opens and navigates to a category', async ({ page, cfg, navigation }) => {
-    skipUnless(cfg.features.mobileNavigation, 'mobileNavigation');
+  if (shopConfig.features.mobileNavigation) test('off-canvas navigation opens and navigates to a category', async ({ page, cfg, navigation }) => {
     await page.goto(cfg.routes.home);
     const oc = await navigation.openMobileMenu();
     const link = oc.locator('a').filter({ hasText: new RegExp(cfg.testData.mainCategories[1] ?? cfg.testData.mainCategories[0], 'i') }).first();

@@ -28,9 +28,14 @@ test.describe('Important links & redirects', () => {
     const origin = new URL(cfg.baseURL).origin;
     const internal = [...new Set(hrefs)].filter((h) => h.startsWith(origin) && !h.includes('/account/logout')).slice(0, 60);
     const broken: string[] = [];
-    for (const href of internal) {
-      const res = await request.get(href, { maxRedirects: 5 });
-      if (res.status() >= 400) broken.push(`${href} → ${res.status()}`);
+    // in batches: sequentially the ~60 links of a large footer exceed the test timeout
+    for (let i = 0; i < internal.length; i += 6) {
+      await Promise.all(
+        internal.slice(i, i + 6).map(async (href) => {
+          const res = await request.get(href, { maxRedirects: 5 });
+          if (res.status() >= 400) broken.push(`${href} → ${res.status()}`);
+        }),
+      );
     }
     expect(broken, broken.join('\n')).toEqual([]);
   });
@@ -62,9 +67,9 @@ test.describe('Error handling', () => {
   });
 
   test('page number beyond the last page does not crash the page', async ({ page, cfg }) => {
-    // KNOWN SHOP DEFECT (reproduced on staging and production, HD-Toner): /bueroartikel/?p=99999 answers 500.
-    // test.fail() keeps it visible: the run fails as soon as the shop is fixed, so remove the line then.
-    test.fail(cfg.name === 'HD-Toner', 'Out-of-range ?p= returns HTTP 500 in the HD-Toner shop');
+    // KNOWN SHOP DEFECT (reproduced on staging and production, HD-Toner and HQ-Patronen): /bueroartikel/?p=99999 answers 500.
+    // test.fail() keeps it visible: the run fails as soon as the shop is fixed, so remove the flag in the project profile then.
+    test.fail(!!cfg.testData.outOfRangePageReturns500, `Out-of-range ?p= returns HTTP 500 in the ${cfg.name} shop`);
     const res = await page.goto(`${cfg.testData.listingCategoryPath}?p=99999`);
     expect(res?.status()).toBeLessThan(500);
   });

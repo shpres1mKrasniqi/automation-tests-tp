@@ -1,8 +1,9 @@
-import { test, expect, skipUnless } from '../../src/fixtures';
+import { test, expect, shopConfig } from '../../src/fixtures';
 
-test.describe('Contact form', () => {
-  test.beforeEach(async ({ cfg, contact }) => {
-    skipUnless(cfg.features.contactForm, 'contactForm');
+/** Native Shopware contact/newsletter forms. Registered only for shops that have them; the TonerPartner shops embed third-party forms (see tonerpartner.spec.ts). */
+
+if (shopConfig.features.contactForm) test.describe('Contact form', () => {
+  test.beforeEach(async ({ contact }) => {
     await contact.open();
   });
 
@@ -37,9 +38,8 @@ test.describe('Contact form', () => {
   });
 });
 
-test.describe('Newsletter', () => {
+if (shopConfig.features.newsletter) test.describe('Newsletter', () => {
   test('newsletter form is present', async ({ page, cfg }) => {
-    skipUnless(cfg.features.newsletter, 'newsletter');
     await page.goto(cfg.routes.home);
     await expect(page.locator('form[action*="newsletter"]').first()).toBeAttached();
   });

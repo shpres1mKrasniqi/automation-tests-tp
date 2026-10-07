@@ -1,4 +1,4 @@
-import { test, expect, skipUnless } from "../../src/fixtures";
+import { test, expect, shopConfig } from "../../src/fixtures";
 import { expectNotFoundPage } from "../../src/utils/notFound";
 
 test.describe("Product detail page", () => {
@@ -36,12 +36,12 @@ test.describe("Product detail page", () => {
     ).toBeAttached();
   });
 
-  test(
+  // registered only for shops with a configured variant product (the TonerPartner shops sell none)
+  if (shopConfig.testData.variantProduct.productNumber !== "TODO") test(
     "variant switch updates product number and URL",
     { tag: "@smoke" },
     async ({ product, cfg, page }) => {
       const v = cfg.testData.variantProduct;
-      test.skip(v.productNumber === "TODO", "No variant product configured in the project profile");
       await product.open(v);
       await expect(product.configuratorGroups).toHaveCount(
         v.optionGroups.length,
@@ -69,8 +69,8 @@ test.describe("Product detail page", () => {
     await expect(page.locator("body")).toHaveClass(/is-ctl-(navigation|landingpage)/);
   });
 
-  test("reviews tab/teaser is present", async ({ product, cfg }) => {
-    skipUnless(cfg.features.productReviews, "productReviews");
+  // registered only for shops with product reviews (the TonerPartner shops have none)
+  if (shopConfig.features.productReviews) test("reviews tab/teaser is present", async ({ product, cfg }) => {
     await product.open(cfg.testData.simpleProduct);
     await expect(
       product.page.locator(cfg.selectors.product.reviewTeaser).first(),

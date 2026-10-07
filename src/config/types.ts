@@ -25,6 +25,14 @@ export interface FeatureFlags {
   currencySwitch: boolean;
   /** Mobile off-canvas navigation exists (Shopware default). */
   mobileNavigation: boolean;
+  /** Third-party consent layer (Usercentrics) instead of Shopware's cookie banner: `selectors.cookie.*` describe it. */
+  consentLayer?: boolean;
+  /** Private/business customer switch that toggles prices incl./excl. VAT (TonerPartner shops). */
+  vatSwitch?: boolean;
+  /** TonerPartner shop family (HD-Toner, HQ-Patronen, Tintencenter): enables tests/storefront/tonerpartner.spec.ts. */
+  tonerPartner?: boolean;
+  /** Hovering a main category opens a mega-menu flyout with sub categories. */
+  megaMenuFlyout?: boolean;
 }
 
 export interface ProductRef {
@@ -99,8 +107,10 @@ export interface ProjectConfig {
     searchMinResults: number;
     /** Search term guaranteed to return nothing. */
     searchNoResultTerm: string;
-    /** How unknown URLs render: the storefront error page (default) or the framework exception page (intentional on HD-Toner staging). */
-    notFoundPage?: 'shop' | 'exception';
+
+    breadcrumbPagePath?: string;
+    outOfRangePageReturns500?: boolean;
+    notFoundPage?: "shop" | "exception";
     /** Filter types that must exist on the listing page (language independent). */
     expectedFilterTypes: Array<
       "manufacturer" | "properties" | "price" | "rating" | "boolean"
@@ -119,6 +129,19 @@ export interface ProjectConfig {
       /** Address rejected by the shop's address validation (negative tests); omit if the shop has none. */
       invalidAddress?: CustomerAddress;
     };
+    /** Printer model finder (Hersteller > Serie > Modell, TonerPartner shops); omit if the shop has none. */
+    printerFinder?: {
+      manufacturer: string;
+      /** Brand page listing the printer series, e.g. "/drucker/brother/". */
+      manufacturerPath: string;
+      series: string;
+      /** Visible model name as listed in the model dropdown. */
+      model: string;
+      /** Substring of the printer page URL after selecting the model. */
+      modelUrlPart: RegExp;
+    };
+    /** Page with the newsletter sign-up form (third party iframe on the TonerPartner shops). */
+    newsletterPath?: string;
     /** Visible text of the footer link leading to the contact form. */
     contactLinkText: RegExp;
     /** Payment/shipping method labels to select in checkout; null = keep default. */

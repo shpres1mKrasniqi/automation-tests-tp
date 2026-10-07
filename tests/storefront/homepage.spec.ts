@@ -38,9 +38,11 @@ test.describe('Homepage', () => {
 
   test('renders product images without broken sources', async ({ page, cfg }) => {
     await page.goto(cfg.routes.home, { waitUntil: 'load' });
-    const imgs = page.locator(`${cfg.selectors.listing.productImage}, .cms-image`);
+    // not the slider's cloned slides (tiny-slider): their lazy images are never loaded
+    const real = (s: string) => `${s}:not(.tns-slide-cloned *)`;
+    const imgs = page.locator([cfg.selectors.listing.productImage, '.cms-image'].map(real).join(', '));
     const count = await imgs.count();
-    test.skip(count === 0, 'No product images on homepage');
+    expect(count, 'no product images on the homepage').toBeGreaterThan(0);
     for (let i = 0; i < Math.min(count, 6); i++) {
       const img = imgs.nth(i);
       await img.scrollIntoViewIfNeeded();

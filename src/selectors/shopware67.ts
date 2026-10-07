@@ -187,6 +187,27 @@ export const shopware67Selectors = {
     useSelection: '[endereco-use-selection]',
     close: '[endereco-modal-close]',
   },
+  /**
+   * TonerPartner "printer model filter" plugin (Hersteller > Serie > Modell comboboxes in the header
+   * bar of the HD-Toner / HQ-Patronen / Tintencenter shops). Optional: only used when
+   * `testData.printerFinder` is configured.
+   */
+  printerFinder: {
+    manufacturerInput: '#manufacturer',
+    seriesInput: '#series',
+    modelInput: '#model',
+    manufacturerOption: '.manufacturer-options li[role="option"]',
+    seriesOption: '.series-options li[role="option"]',
+    modelOption: '.model-options li[role="option"]',
+  },
+  /** TonerPartner private/business customer switch (prices incl. / excl. VAT). Optional (`features.vatSwitch`). */
+  vatSwitch: {
+    trigger: '.tp-vat-dropdown__trigger',
+    businessOption: '.tp-vat-dropdown__item[data-value="true"]',
+    privateOption: '.tp-vat-dropdown__item[data-value="false"]',
+    /** Cookie the shop sets with the chosen mode ("true" = business / net prices). */
+    cookie: 'brutoNeto',
+  },
   account: {
     overview: '.account-overview, .account-welcome',
     aside: '.account-aside',

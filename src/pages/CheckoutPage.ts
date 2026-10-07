@@ -14,8 +14,19 @@ export class CheckoutPage extends BasePage {
     await this.goto(this.cfg.routes.checkoutConfirm);
   }
 
+  /** Selects the configured payment method unless it is already active (a default like PayPal can hide the submit button). */
+  async ensurePaymentMethod(): Promise<void> {
+    const { paymentMethod } = this.cfg.testData;
+    if (!paymentMethod) return;
+    const label = this.$(this.s.checkout.paymentMethodLabel).filter({ hasText: new RegExp(escapeRegExp(paymentMethod), 'i') }).first();
+    const inputId = await label.getAttribute('for');
+    const input = inputId ? this.page.locator(`[id="${inputId}"]`) : label.locator(this.s.checkout.paymentMethod);
+    if (!(await input.isChecked())) await this.selectPaymentMethod(paymentMethod);
+  }
+
   async expectOnConfirm(): Promise<void> {
     await this.expectPath(this.cfg.routes.checkoutConfirm);
+    await this.ensurePaymentMethod();
     await expect(this.submitButton).toBeVisible();
   }
 

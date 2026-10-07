@@ -171,13 +171,22 @@ export class AuthPage extends BasePage {
     const feedback = this.addressCheckModal.or(this.validationErrors).first();
 
     for (let attempt = 1; attempt <= 3; attempt++) {
+      // HQ-Patronen: the address check popup can already be open (opened by the field blur) and then
+      // covers the submit button — that popup is the outcome the caller asserts on
+      if (await this.addressCheckModal.isVisible()) return;
       const outcomes = [
         this.page
           .waitForRequest((r) => r.method() === "POST" && new URL(r.url()).pathname === action, { timeout: 3_000 })
           .then(() => true, () => false),
         feedback.waitFor({ state: "visible", timeout: 3_000 }).then(() => true, () => false),
       ];
-      await submit.click();
+      try {
+        await submit.click();
+      } catch (e) {
+        // the popup opened while the click was being performed and now intercepts it
+        if (await this.addressCheckModal.isVisible()) return;
+        throw e;
+      }
       const happened = await new Promise<boolean>((resolve) => {
         let pending = outcomes.length;
         for (const o of outcomes) o.then((ok) => (ok ? resolve(true) : --pending === 0 && resolve(false)));

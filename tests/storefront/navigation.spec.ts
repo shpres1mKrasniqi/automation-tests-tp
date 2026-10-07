@@ -1,4 +1,4 @@
-import { test, expect } from '../../src/fixtures';
+import { test, expect, shopConfig } from '../../src/fixtures';
 
 test.describe('Main navigation', () => {
   test('shows the configured main categories', { tag: '@smoke' }, async ({ page, cfg, navigation }) => {
@@ -10,6 +10,8 @@ test.describe('Main navigation', () => {
   });
 
   test('every main category opens a listing page', async ({ page, cfg, navigation }) => {
+    // one full homepage load per category: more categories than the default budget allows
+    test.slow();
     for (const name of cfg.testData.mainCategories) {
       await page.goto(cfg.routes.home);
       await navigation.openCategory(name);
@@ -19,10 +21,11 @@ test.describe('Main navigation', () => {
     }
   });
 
-  test('flyout shows sub categories (desktop)', async ({ page, cfg, navigation }) => {
+  // Bootstrap-dropdown flyouts: registered only for shops without the TonerPartner mega menu (see tonerpartner.spec.ts)
+  if (!shopConfig.features.tonerPartner) test('flyout shows sub categories (desktop)', async ({ page, cfg, navigation }) => {
     await page.goto(cfg.routes.home);
     const withFlyout = page.locator(`${cfg.selectors.navigation.rootLink}.dropdown-toggle`).first();
-    test.skip((await withFlyout.count()) === 0, 'No category with flyout');
+    await expect(withFlyout).toBeAttached();
     const name = (await withFlyout.innerText()).trim();
     const flyout = await navigation.openFlyout(name);
     const sub = flyout.locator(cfg.selectors.navigation.flyoutLink).first();
@@ -32,7 +35,7 @@ test.describe('Main navigation', () => {
   });
 
   test('category page shows breadcrumb', async ({ page, cfg }) => {
-    await page.goto(cfg.testData.listingCategoryPath);
+    await page.goto(cfg.testData.breadcrumbPagePath ?? cfg.testData.listingCategoryPath);
     await expect(page.locator(cfg.selectors.page.breadcrumb).first()).toBeVisible();
   });
 });

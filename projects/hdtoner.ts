@@ -22,6 +22,10 @@ const config: ProjectConfig = {
     languageSwitch: false,
     currencySwitch: false,
     mobileNavigation: true,
+    consentLayer: true, // Usercentrics (see selectors.cookie)
+    vatSwitch: true, // Privatkund*in inkl. MwSt. / Geschäftskunde exkl. MwSt.
+    tonerPartner: true, // enables tests/storefront/tonerpartner.spec.ts
+    megaMenuFlyout: true, // hovering a main category opens the mega menu
   },
 
   routes: {
@@ -72,6 +76,7 @@ const config: ProjectConfig = {
     searchMinResults: 1,
     // staging deliberately throws the Symfony routing exception for unknown URLs (production shows the shop 404 page)
     notFoundPage: "exception",
+    outOfRangePageReturns500: true,
     searchNoResultTerm: "9999999999999",
     expectedFilterTypes: [], // only a printer-model filter on desktop, no standard filter panel
     expectedSortings: ["name-asc", "name-desc", "price-asc", "price-desc"],
@@ -100,6 +105,14 @@ const config: ProjectConfig = {
         countryLabel: "Deutschland|Germany",
       },
     },
+    printerFinder: {
+      manufacturer: "Brother",
+      manufacturerPath: "/toner/brother/",
+      series: "HL-L",
+      model: "Brother HL-L 2300 D",
+      modelUrlPart: /\/Toner\/Brother\/HL-L2300D\//i,
+    },
+    newsletterPath: "/service/newsletter/",
     contactLinkText: /Kontakt|Contact/i,
     paymentMethod: null, // TODO: only an offline method, e.g. 'Vorkasse'
     shippingMethod: null,

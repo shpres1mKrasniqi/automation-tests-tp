@@ -1,9 +1,8 @@
-import { test, expect, skipUnless } from '../../src/fixtures';
+import { test, expect, shopConfig } from '../../src/fixtures';
 import { buildCustomer } from '../../src/data/customer';
 
-test.describe('Customer registration', () => {
-  test.beforeEach(async ({ cfg, auth }) => {
-    skipUnless(cfg.features.registration, 'registration');
+if (shopConfig.features.registration) test.describe('Customer registration', () => {
+  test.beforeEach(async ({ auth }) => {
     await auth.open();
   });
 
@@ -51,7 +50,7 @@ test.describe('Customer registration', () => {
   test('invalid address opens the address check popup and blocks registration', async ({ page, cfg, auth, adminApi, requireWriteAccess }) => {
     void requireWriteAccess;
     const invalidAddress = cfg.testData.customer.invalidAddress;
-    test.skip(!invalidAddress, 'No invalidAddress configured (shop without address validation)');
+    expect(invalidAddress, 'invalidAddress must be configured for shops with address validation').toBeTruthy();
     const customer = buildCustomer(cfg, { address: invalidAddress! });
 
     await auth.register(customer, { invalidAddress: true });

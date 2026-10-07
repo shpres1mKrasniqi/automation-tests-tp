@@ -1,4 +1,4 @@
-import { test, expect } from "../../src/fixtures";
+import { test, expect, shopConfig } from "../../src/fixtures";
 import { isSortedAsc, isSortedDesc } from "../../src/utils/price";
 
 test.describe("Product listing", () => {
@@ -34,10 +34,10 @@ test.describe("Product listing", () => {
     listing,
     cfg,
   }) => {
-    test.skip(
-      !(await listing.pagination.isVisible()),
-      "Category fits on one page — no pagination",
-    );
+    await expect(
+      listing.pagination,
+      "the configured listing category must span several pages",
+    ).toBeVisible();
     const next = page
       .locator(cfg.selectors.listing.paginationNext)
       .locator("a, label")
@@ -96,12 +96,9 @@ test.describe("Sorting", () => {
   });
 });
 
-test.describe("Filters", () => {
+// registered only for shops with the standard filter panel (the TonerPartner shops filter by printer model instead, see printer-finder.spec.ts)
+if (shopConfig.testData.expectedFilterTypes.length > 0) test.describe("Filters", () => {
   test.beforeEach(async ({ listing, cfg }) => {
-    test.skip(
-      cfg.testData.expectedFilterTypes.length === 0,
-      "Shop has no standard filter panel (expectedFilterTypes is empty in the project profile)",
-    );
     await listing.open(cfg.testData.listingCategoryPath);
   });
 

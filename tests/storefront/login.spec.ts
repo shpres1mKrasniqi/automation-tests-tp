@@ -37,6 +37,8 @@ test.describe('Login / logout', () => {
   });
 
   test('cart is kept after login', async ({ page, cfg, auth, cart, cartHelper, customer }) => {
+    // UI cart setup (no Store API) + login + cart page take ~50s on staging: too close to the default budget
+    test.slow();
     await cartHelper.add(cfg.testData.simpleProduct);
     await auth.open();
     await auth.loginAndExpectSuccess(customer.email, customer.password);

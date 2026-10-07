@@ -22,7 +22,7 @@ const desktopProjects: Project[] = [
 ].map((p) => ({
   ...p,
   testDir: './tests',
-  testIgnore: /setup\/.*/,
+  testIgnore: [/setup\/.*/, /client\/example-.*/],
   grepInvert: /@mobile-only/,
   dependencies: ['setup'],
 }));
